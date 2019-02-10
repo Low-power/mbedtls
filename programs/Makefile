@@ -76,8 +76,6 @@ ifdef PTHREAD
 APPS +=	ssl/ssl_pthread_server$(EXEXT)
 endif
 
-.SILENT:
-
 .PHONY: all clean list
 
 all: $(APPS)

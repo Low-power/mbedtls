@@ -87,8 +87,6 @@ APPS =	test_suite_aes.ecb$(EXEXT)	test_suite_aes.cbc$(EXEXT)	\
 	test_suite_xtea$(EXEXT)		test_suite_version$(EXEXT)	\
 	test_suite_sm4$(EXEXT)
 
-.SILENT:
-
 .PHONY: all check test clean
 
 all: $(APPS)

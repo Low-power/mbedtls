@@ -78,8 +78,6 @@ OBJS_TLS=	debug.o		net_sockets.o		\
 		ssl_srv.o	ssl_ticket.o		\
 		ssl_tls.o
 
-.SILENT:
-
 .PHONY: all static shared clean
 
 ifndef SHARED
