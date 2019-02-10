@@ -171,7 +171,6 @@
 
 #if defined(MBEDTLS_SHA512_C)
 #include "mbedtls/sha512.h"
->>>>>>> origin/mbedtls-2.7
 #endif
 
 #if defined(MBEDTLS_SSL_TLS_C)
