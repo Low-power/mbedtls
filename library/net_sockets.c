@@ -45,11 +45,12 @@
 #if (defined(_WIN32) || defined(_WIN32_WCE)) && !defined(EFIX64) && \
     !defined(EFI32)
 
-#ifdef _WIN32_WINNT
+#if !defined(_WIN32_WINNT) || (_WIN32_WINNT < 0x0501)
 #undef _WIN32_WINNT
-#endif
 /* Enables getaddrinfo() & Co */
 #define _WIN32_WINNT 0x0501
+#endif
+
 #include <ws2tcpip.h>
 
 #include <winsock2.h>
@@ -270,13 +271,18 @@ static int net_would_block( const mbedtls_net_context *ctx )
  */
 static int net_would_block( const mbedtls_net_context *ctx )
 {
+    int err = errno;
+
     /*
      * Never return 'WOULD BLOCK' on a non-blocking socket
      */
     if( ( fcntl( ctx->fd, F_GETFL ) & O_NONBLOCK ) != O_NONBLOCK )
+    {
+        errno = err;
         return( 0 );
+    }
 
-    switch( errno )
+    switch( errno = err )
     {
 #if defined EAGAIN
         case EAGAIN:

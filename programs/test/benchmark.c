@@ -126,19 +126,10 @@ do {                                                                    \
         CODE;                                                           \
     }                                                                   \
                                                                         \
-    mbedtls_printf( "%9lu Kb/s,  %9lu cycles/byte\n",                   \
+    mbedtls_printf( "%9lu KiB/s,  %9lu cycles/byte\n",                   \
                      ii * BUFSIZE / 1024,                               \
                      ( mbedtls_timing_hardclock() - tsc ) / ( jj * BUFSIZE ) );         \
 } while( 0 )
-
-#if defined(MBEDTLS_ERROR_C)
-#define PRINT_ERROR                                                     \
-        mbedtls_strerror( ret, ( char * )tmp, sizeof( tmp ) );          \
-        mbedtls_printf( "FAILED: %s\n", tmp );
-#else
-#define PRINT_ERROR                                                     \
-        mbedtls_printf( "FAILED: -0x%04x\n", -ret );
-#endif
 
 #if defined(MBEDTLS_MEMORY_BUFFER_ALLOC_C) && defined(MBEDTLS_MEMORY_DEBUG)
 
@@ -327,32 +318,32 @@ int main( int argc, char *argv[] )
 
 #if defined(MBEDTLS_MD4_C)
     if( todo.md4 )
-        TIME_AND_TSC( "MD4", mbedtls_md4( buf, BUFSIZE, tmp ) );
+        TIME_AND_TSC( "MD4", mbedtls_md4_ret( buf, BUFSIZE, tmp ) );
 #endif
 
 #if defined(MBEDTLS_MD5_C)
     if( todo.md5 )
-        TIME_AND_TSC( "MD5", mbedtls_md5( buf, BUFSIZE, tmp ) );
+        TIME_AND_TSC( "MD5", mbedtls_md5_ret( buf, BUFSIZE, tmp ) );
 #endif
 
 #if defined(MBEDTLS_RIPEMD160_C)
     if( todo.ripemd160 )
-        TIME_AND_TSC( "RIPEMD160", mbedtls_ripemd160( buf, BUFSIZE, tmp ) );
+        TIME_AND_TSC( "RIPEMD160", mbedtls_ripemd160_ret( buf, BUFSIZE, tmp ) );
 #endif
 
 #if defined(MBEDTLS_SHA1_C)
     if( todo.sha1 )
-        TIME_AND_TSC( "SHA-1", mbedtls_sha1( buf, BUFSIZE, tmp ) );
+        TIME_AND_TSC( "SHA-1", mbedtls_sha1_ret( buf, BUFSIZE, tmp ) );
 #endif
 
 #if defined(MBEDTLS_SHA256_C)
     if( todo.sha256 )
-        TIME_AND_TSC( "SHA-256", mbedtls_sha256( buf, BUFSIZE, tmp, 0 ) );
+        TIME_AND_TSC( "SHA-256", mbedtls_sha256_ret( buf, BUFSIZE, tmp, 0 ) );
 #endif
 
 #if defined(MBEDTLS_SHA512_C)
     if( todo.sha512 )
-        TIME_AND_TSC( "SHA-512", mbedtls_sha512( buf, BUFSIZE, tmp, 0 ) );
+        TIME_AND_TSC( "SHA-512", mbedtls_sha512_ret( buf, BUFSIZE, tmp, 0 ) );
 #endif
 
 #if defined(MBEDTLS_ARC4_C)
@@ -603,7 +594,6 @@ int main( int argc, char *argv[] )
         TIME_AND_TSC( "HMAC_DRBG SHA-1 (NOPR)",
                 if( mbedtls_hmac_drbg_random( &hmac_drbg, buf, BUFSIZE ) != 0 )
                 mbedtls_exit(1) );
-        mbedtls_hmac_drbg_free( &hmac_drbg );
 
         if( mbedtls_hmac_drbg_seed( &hmac_drbg, md_info, myrand, NULL, NULL, 0 ) != 0 )
             mbedtls_exit(1);
@@ -612,7 +602,6 @@ int main( int argc, char *argv[] )
         TIME_AND_TSC( "HMAC_DRBG SHA-1 (PR)",
                 if( mbedtls_hmac_drbg_random( &hmac_drbg, buf, BUFSIZE ) != 0 )
                 mbedtls_exit(1) );
-        mbedtls_hmac_drbg_free( &hmac_drbg );
 #endif
 
 #if defined(MBEDTLS_SHA256_C)
@@ -624,7 +613,6 @@ int main( int argc, char *argv[] )
         TIME_AND_TSC( "HMAC_DRBG SHA-256 (NOPR)",
                 if( mbedtls_hmac_drbg_random( &hmac_drbg, buf, BUFSIZE ) != 0 )
                 mbedtls_exit(1) );
-        mbedtls_hmac_drbg_free( &hmac_drbg );
 
         if( mbedtls_hmac_drbg_seed( &hmac_drbg, md_info, myrand, NULL, NULL, 0 ) != 0 )
             mbedtls_exit(1);
@@ -633,8 +621,8 @@ int main( int argc, char *argv[] )
         TIME_AND_TSC( "HMAC_DRBG SHA-256 (PR)",
                 if( mbedtls_hmac_drbg_random( &hmac_drbg, buf, BUFSIZE ) != 0 )
                 mbedtls_exit(1) );
-        mbedtls_hmac_drbg_free( &hmac_drbg );
 #endif
+        mbedtls_hmac_drbg_free( &hmac_drbg );
     }
 #endif
 
@@ -667,14 +655,22 @@ int main( int argc, char *argv[] )
     if( todo.dhm )
     {
         int dhm_sizes[] = { 2048, 3072 };
-        const char *dhm_P[] = {
-            MBEDTLS_DHM_RFC3526_MODP_2048_P,
-            MBEDTLS_DHM_RFC3526_MODP_3072_P,
-        };
-        const char *dhm_G[] = {
-            MBEDTLS_DHM_RFC3526_MODP_2048_G,
-            MBEDTLS_DHM_RFC3526_MODP_3072_G,
-        };
+        static const unsigned char dhm_P_2048[] =
+            MBEDTLS_DHM_RFC3526_MODP_2048_P_BIN;
+        static const unsigned char dhm_P_3072[] =
+            MBEDTLS_DHM_RFC3526_MODP_3072_P_BIN;
+        static const unsigned char dhm_G_2048[] =
+            MBEDTLS_DHM_RFC3526_MODP_2048_G_BIN;
+        static const unsigned char dhm_G_3072[] =
+            MBEDTLS_DHM_RFC3526_MODP_3072_G_BIN;
+
+        const unsigned char *dhm_P[] = { dhm_P_2048, dhm_P_3072 };
+        const size_t dhm_P_size[] = { sizeof( dhm_P_2048 ),
+                                      sizeof( dhm_P_3072 ) };
+
+        const unsigned char *dhm_G[] = { dhm_G_2048, dhm_G_3072 };
+        const size_t dhm_G_size[] = { sizeof( dhm_G_2048 ),
+                                      sizeof( dhm_G_3072 ) };
 
         mbedtls_dhm_context dhm;
         size_t olen;
@@ -682,8 +678,10 @@ int main( int argc, char *argv[] )
         {
             mbedtls_dhm_init( &dhm );
 
-            if( mbedtls_mpi_read_string( &dhm.P, 16, dhm_P[i] ) != 0 ||
-                mbedtls_mpi_read_string( &dhm.G, 16, dhm_G[i] ) != 0 )
+            if( mbedtls_mpi_read_binary( &dhm.P, dhm_P[i],
+                                         dhm_P_size[i] ) != 0 ||
+                mbedtls_mpi_read_binary( &dhm.G, dhm_G[i],
+                                         dhm_G_size[i] ) != 0 )
             {
                 mbedtls_exit( 1 );
             }

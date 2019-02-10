@@ -29,9 +29,12 @@
 #include "mbedtls/platform.h"
 #else
 #include <stdio.h>
-#define mbedtls_fprintf    fprintf
-#define mbedtls_printf     printf
-#endif
+#include <stdlib.h>
+#define mbedtls_fprintf         fprintf
+#define mbedtls_printf          printf
+#define MBEDTLS_EXIT_SUCCESS    EXIT_SUCCESS
+#define MBEDTLS_EXIT_FAILURE    EXIT_FAILURE
+#endif /* MBEDTLS_PLATFORM_C */
 
 #include "mbedtls/aes.h"
 #include "mbedtls/md.h"
@@ -69,9 +72,16 @@ int main( void )
     return( 0 );
 }
 #else
+
+/* Implementation that should never be optimized out by the compiler */
+static void mbedtls_zeroize( void *v, size_t n ) {
+    volatile unsigned char *p = v; while( n-- ) *p++ = 0;
+}
+
 int main( int argc, char *argv[] )
 {
-    int ret = 1;
+    int ret = 0;
+    int exit_code = MBEDTLS_EXIT_FAILURE;
 
     unsigned int i, n;
     int mode, lastn;
@@ -429,7 +439,7 @@ int main( int argc, char *argv[] )
         }
     }
 
-    ret = 0;
+    exit_code = MBEDTLS_EXIT_SUCCESS;
 
 exit:
     if( fin )
@@ -441,17 +451,17 @@ exit:
        the case when the user has missed or reordered some,
        in which case the key might not be in argv[4]. */
     for( i = 0; i < (unsigned int) argc; i++ )
-        memset( argv[i], 0, strlen( argv[i] ) );
+        mbedtls_zeroize( argv[i], strlen( argv[i] ) );
 
-    memset( IV,     0, sizeof( IV ) );
-    memset( key,    0, sizeof( key ) );
-    memset( tmp,    0, sizeof( tmp ) );
-    memset( buffer, 0, sizeof( buffer ) );
-    memset( digest, 0, sizeof( digest ) );
+    mbedtls_zeroize( IV,     sizeof( IV ) );
+    mbedtls_zeroize( key,    sizeof( key ) );
+    mbedtls_zeroize( tmp,    sizeof( tmp ) );
+    mbedtls_zeroize( buffer, sizeof( buffer ) );
+    mbedtls_zeroize( digest, sizeof( digest ) );
 
     mbedtls_aes_free( &aes_ctx );
     mbedtls_md_free( &sha_ctx );
 
-    return( ret );
+    return( exit_code );
 }
 #endif /* MBEDTLS_AES_C && MBEDTLS_SHA256_C && MBEDTLS_FS_IO */
