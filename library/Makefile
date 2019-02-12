@@ -29,7 +29,7 @@ WINDOWS_LIBS = -lws2_32 -lwinmm -lgdi32
 ifdef SHARED
 # all code is position-indep with mingw, avoid warning about useless flag
 ifndef WINDOWS_BUILD
-LOCAL_CFLAGS += -fPIC -fpic
+LOCAL_CFLAGS += -fPIC
 endif
 endif
 
