@@ -441,11 +441,11 @@ test_suite_sm4$(EXEXT): test_suite_sm4.c $(DEP)
 	$(CC) $(LOCAL_CFLAGS) $(CFLAGS) $<	$(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(LIBS)
 
 clean:
-#ifndef WINDOWS
+ifndef WINDOWS
 	rm -f $(APPS) *.c
-#else
-#	del /Q /F *.c *.exe
-#endif
+else
+	del /Q /F *.c *.exe
+endif
 
 check: $(APPS)
 	perl scripts/run-test-suites.pl
