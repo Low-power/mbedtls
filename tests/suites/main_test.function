@@ -418,7 +418,7 @@ int main(int argc, const char *argv[])
             {
                 test_info.failed = 0;
 
-#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
+#if (defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))) && !defined(__SVR4)
                 /* Suppress all output from the library unless we're verbose
                  * mode
                  */
@@ -435,7 +435,7 @@ int main(int argc, const char *argv[])
 
                 ret = dispatch_test( cnt, params );
 
-#if defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))
+#if (defined(__unix__) || (defined(__APPLE__) && defined(__MACH__))) && !defined(__SVR4)
                 if( !option_verbose && restore_output( &stdout, stdout_fd ) )
                 {
                         /* Redirection has failed with no stdout so exit */

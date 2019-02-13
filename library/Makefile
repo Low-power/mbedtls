@@ -23,7 +23,7 @@ ifdef WINDOWS
 WINDOWS_BUILD=1
 endif
 
-WINDOWS_LIBS = -lws2_32 -lwinmm -lgdi32
+WINDOWS_LIBS = -lwinmm -lgdi32
 
 # To compile as a shared library:
 ifdef SHARED
@@ -44,9 +44,15 @@ DLEXT ?= so
 # the - prefix for command line options (e.g. llvm-ar)
 AR_DASH ?= -
 
+LD_OPTION_SONAME ?= --soname
+
+# Set SOCKET_LIBS="-lsocket -lnsl" for SysV
+#SOCKET_LIBS ?=
+
 # Windows shared library extension:
 ifdef WINDOWS_BUILD
 DLEXT=dll
+SOCKET_LIBS = -lws2_32
 endif
 
 OBJS_CRYPTO=	aes.o		aesni.o		arc4.o		\
@@ -101,7 +107,7 @@ libmbedtls.a: $(OBJS_TLS)
 
 libmbedtls.$(SOEXT_TLS): $(OBJS_TLS) libmbedx509.so
 	@echo "  LD    $@"
-	$(CC) --shared -Wl,--soname,$@ $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS_TLS) -L. -lmbedcrypto -lmbedx509
+	$(CC) --shared -Wl,$(LD_OPTION_SONAME),$@ $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS_TLS) $(SOCKET_LIBS) -L. -lmbedcrypto -lmbedx509 $(LIBS)
 
 libmbedtls.so: libmbedtls.$(SOEXT_TLS)
 	@echo "  LN    $@ -> $<"
@@ -109,11 +115,11 @@ libmbedtls.so: libmbedtls.$(SOEXT_TLS)
 
 libmbedtls.dylib: $(OBJS_TLS) libmbedx509.dylib
 	@echo "  LD    $@"
-	$(CC) -dynamiclib $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS_TLS) -L. -lmbedcrypto -lmbedx509
+	$(CC) -dynamiclib $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS_TLS) $(SOCKET_LIBS) -L. -lmbedcrypto -lmbedx509 $(LIBS)
 
 libmbedtls.dll: $(OBJS_TLS) libmbedx509.dll
 	@echo "  LD    $@"
-	$(CC) --shared -Wl,--soname,$@ -Wl,--out-implib,$@.a -o $@ $(OBJS_TLS) --static-libgcc $(LOCAL_LDFLAGS) $(LDFLAGS) $(WINDOWS_LIBS) -L. -lmbedcrypto -lmbedx509
+	$(CC) --shared -Wl,--soname,$@ -Wl,--out-implib,$@.a -o $@ $(OBJS_TLS) --static-libgcc $(LOCAL_LDFLAGS) $(LDFLAGS) $(WINDOWS_LIBS) $(SOCKET_LIBS) -L. -lmbedcrypto -lmbedx509 $(LIBS)
 
 # x509
 libmbedx509.a: $(OBJS_X509)
@@ -124,7 +130,7 @@ libmbedx509.a: $(OBJS_X509)
 
 libmbedx509.$(SOEXT_X509): $(OBJS_X509) libmbedcrypto.so
 	@echo "  LD    $@"
-	$(CC) --shared -Wl,--soname,$@ $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS_X509) -L. -lmbedcrypto
+	$(CC) --shared -Wl,$(LD_OPTION_SONAME),$@ $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS_X509) -L. -lmbedcrypto $(LIBS)
 
 libmbedx509.so: libmbedx509.$(SOEXT_X509)
 	@echo "  LN    $@ -> $<"
@@ -132,11 +138,11 @@ libmbedx509.so: libmbedx509.$(SOEXT_X509)
 
 libmbedx509.dylib: $(OBJS_X509) libmbedcrypto.dylib
 	@echo "  LD    $@"
-	$(CC) -dynamiclib -L. -lmbedcrypto  $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS_X509)
+	$(CC) -dynamiclib -L. -lmbedcrypto  $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS_X509) $(LIBS)
 
 libmbedx509.dll: $(OBJS_X509) libmbedcrypto.dll
 	@echo "  LD    $@"
-	$(CC) --shared -Wl,--soname,$@ -Wl,--out-implib,$@.a -o $@ $(OBJS_X509) --static-libgcc $(LOCAL_LDFLAGS) $(LDFLAGS) $(WINDOWS_LIBS) -L. -lmbedcrypto
+	$(CC) --shared -Wl,--soname,$@ -Wl,--out-implib,$@.a -o $@ $(OBJS_X509) --static-libgcc $(LOCAL_LDFLAGS) $(LDFLAGS) $(WINDOWS_LIBS) -L. -lmbedcrypto $(LIBS)
 
 # crypto
 libmbedcrypto.a: $(OBJS_CRYPTO)
@@ -147,7 +153,7 @@ libmbedcrypto.a: $(OBJS_CRYPTO)
 
 libmbedcrypto.$(SOEXT_CRYPTO): $(OBJS_CRYPTO)
 	@echo "  LD    $@"
-	$(CC) --shared -Wl,--soname,$@ $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS_CRYPTO)
+	$(CC) --shared -Wl,$(LD_OPTION_SONAME),$@ $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS_CRYPTO) $(LIBS)
 
 libmbedcrypto.so: libmbedcrypto.$(SOEXT_CRYPTO)
 	@echo "  LN    $@ -> $<"
@@ -155,11 +161,11 @@ libmbedcrypto.so: libmbedcrypto.$(SOEXT_CRYPTO)
 
 libmbedcrypto.dylib: $(OBJS_CRYPTO)
 	@echo "  LD    $@"
-	$(CC) -dynamiclib $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS_CRYPTO)
+	$(CC) -dynamiclib $(LOCAL_LDFLAGS) $(LDFLAGS) -o $@ $(OBJS_CRYPTO) $(LIBS)
 
 libmbedcrypto.dll: $(OBJS_CRYPTO)
 	@echo "  LD    $@"
-	$(CC) --shared -Wl,--soname,$@ -Wl,--out-implib,$@.a -o $@ $(OBJS_CRYPTO) --static-libgcc $(LOCAL_LDFLAGS) $(LDFLAGS) $(WINDOWS_LIBS)
+	$(CC) --shared -Wl,--soname,$@ -Wl,--out-implib,$@.a -o $@ $(OBJS_CRYPTO) --static-libgcc $(LOCAL_LDFLAGS) $(LDFLAGS) $(WINDOWS_LIBS) $(LIBS)
 
 .c.o:
 	@echo "  CC    $<"
